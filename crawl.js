@@ -1,5 +1,4 @@
-const jsdom = require('jsdom');
-const { JSDOM } = jsdom;
+import { JSDOM } from 'jsdom';
 
 const HTMLBodyLinks = `<body>
                         <a href="/path">Link 1</a>
@@ -10,7 +9,7 @@ const HTMLBodyLinks = `<body>
 const baseURL = 'http://blog.boot.dev';
 
 
-function normalizeURL(url) {
+export function normalizeURL(url) {
   const newUrl = new URL(url);
   const pathnameWithoutSlash = newUrl.pathname.split('/') ?? '';
   let normalizedURL = '';
@@ -26,7 +25,7 @@ function normalizeURL(url) {
   return normalizedURL;
 }
 
-function getURLsFromHTML(HTMLBody, baseURL) {
+export function getURLsFromHTML(HTMLBody, baseURL) {
   const dom = new JSDOM(HTMLBody);
 
   const linksList = dom.window.document.querySelectorAll('a');
@@ -41,12 +40,32 @@ function getURLsFromHTML(HTMLBody, baseURL) {
   return links;
 }
 
-getURLsFromHTML(HTMLBodyLinks, 'http://blog.boot.dev');
-//console.log(normalizeURL('http://blog.boot.dev/path/test'));
-//console.log(normalizeURL('http://blog.boot.dev/path/test'));
-//console.log(normalizeURL('http://blog.boot.dev'));
-
-module.exports = {
-  normalizeURL,
-  getURLsFromHTML
+export async function crawlPage(baseURL) {
+  try {
+    await fetch(baseURL, {
+      method: 'GET',
+      mode: 'cors',
+      headers: {
+        'Content-Type': 'text/html',
+      }
+    })
+    .then((res) => {
+      for (let key of res.headers) {
+        if (key[0] === 'content-type' && key[1].split(';').shift() !== 'text/html') {
+          throw new Error('Wrong content-type!');
+        }
+      }
+      
+      if (res.status === 404) {
+        throw new Error('Something went wrong! Try Again!');
+      } else {
+        return res.text();
+      }
+    })
+    .then((html) => {
+      console.log(html);
+    });
+  } catch(err) {
+    console.log(err.message);
+  }
 }

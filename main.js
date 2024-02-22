@@ -1,5 +1,6 @@
 import * as readline from 'node:readline';
 import { argv, stdin as input, stdout as output } from 'node:process';
+import { crawlPage } from './crawl.js';
 
 function main() {
   const rline = readline.createInterface({
@@ -13,7 +14,10 @@ function main() {
     return;
   }
 
-  console.log(argv[2]);
+  console.log('Starting crawler robot...');
+  console.log('Scanning...', argv[2]);
+
+  crawlPage(argv[2]);
   rline.close();
 }
 
