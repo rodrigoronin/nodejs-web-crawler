@@ -1,5 +1,5 @@
-const { test, expect } = require('@jest/globals');
-const { normalizeURL, getURLsFromHTML } = require('./crawl');
+import { test, expect } from '@jest/globals';
+import { normalizeURL, getURLsFromHTML } from './crawl';
 
 describe('normalizeURL', () => {
   test('normalize http://blog.boot.dev/path/ url', () => {
@@ -7,12 +7,12 @@ describe('normalizeURL', () => {
     expect(result).toEqual('blog.boot.dev/path');
   });
 
-  test('normalize http://blog.boot.dev/path url', () => {
-    const result = normalizeURL('http://blog.boot.dev/path');
-    expect(result).toEqual('blog.boot.dev/path');
+  test('normalize http://blog.boot.dev/path/anotherpath url', () => {
+    const result = normalizeURL('http://blog.boot.dev/path/anotherpath');
+    expect(result).toEqual('blog.boot.dev/path/anotherpath');
   });
 
-  test('normalize hhttps://blog.boot.dev/path/ url', () => {
+  test('normalize https://blog.boot.dev/path/ url', () => {
     const result = normalizeURL('https://blog.boot.dev/path/');
     expect(result).toBe('blog.boot.dev/path');
   });
@@ -24,7 +24,7 @@ describe('normalizeURL', () => {
 
   test('normalize https://www.google.com url', () => {
     const result = normalizeURL('https://www.google.com');
-    expect(result).toBe('www.google.com/');
+    expect(result).toBe('www.google.com');
   });
 });
 

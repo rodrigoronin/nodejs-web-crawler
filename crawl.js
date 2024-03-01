@@ -11,18 +11,14 @@ const baseURL = 'http://blog.boot.dev';
 
 export function normalizeURL(url) {
   const newUrl = new URL(url);
-  const pathnameWithoutSlash = newUrl.pathname.split('/') ?? '';
-  let normalizedURL = '';
+  const pathnameWithoutSlash = newUrl.pathname.split('/');
+  let normalizedURL = `${newUrl.hostname}${pathnameWithoutSlash.join('/')}`;
 
-  if (pathnameWithoutSlash === '') {
-    normalizeURL = hostname;
-  } else if (pathnameWithoutSlash.length > 2) {
-    normalizedURL = `${newUrl.hostname}/${pathnameWithoutSlash[1]}`;
+  if (normalizedURL.slice(-1) === '/') {
+    return normalizedURL.slice(0, -1);
   } else {
-    normalizedURL = `${newUrl.hostname}/${pathnameWithoutSlash.join('')}`;
+    return normalizedURL;
   }
-
-  return normalizedURL;
 }
 
 export function getURLsFromHTML(HTMLBody, baseURL) {
@@ -32,17 +28,27 @@ export function getURLsFromHTML(HTMLBody, baseURL) {
   const links = [];
 
   for (let link of linksList) {
-    links.push(`${baseURL}${link.href}`);
+    console.log('links ', link.href);
+    if (link.href !== '/') {
+      links.push(`${baseURL}${link.href}`);
+    }
   }
 
-  console.log(links);
 
   return links;
 }
 
-export async function crawlPage(baseURL) {
+export async function crawlPage(baseURL, currentURL, pages) {
+  if (!pages.hasOwnProperty('count')) {
+    currentURL = baseURL;
+  }
+
+  if (normalizeURL(baseURL) !== normalizeURL(currentURL)) {
+    return;
+  }
+
   try {
-    await fetch(baseURL, {
+    await fetch(currentURL, {
       method: 'GET',
       mode: 'cors',
       headers: {
@@ -63,7 +69,7 @@ export async function crawlPage(baseURL) {
       }
     })
     .then((html) => {
-      console.log(html);
+      //const allLinks = getURLsFromHTML(html, baseURL);
     });
   } catch(err) {
     console.log(err.message);

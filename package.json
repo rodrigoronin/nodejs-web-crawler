@@ -6,11 +6,14 @@
   "type": "module",
   "scripts": {
     "dev": "node main.js",
-    "test": "jest"
+    "test": "NODE_OPTIONS=--experimental-vm-modules jest"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
+  "jest": {
+    "transform": {}
+  },
   "dependencies": {
     "jsdom": "^24.0.0"
   },
