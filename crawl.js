@@ -1,14 +1,5 @@
 import { JSDOM } from 'jsdom';
 
-const HTMLBodyLinks = `<body>
-                        <a href="/path">Link 1</a>
-                        <a href="/path/">Link 2</a>
-                        <a href="/test/">Link 3</a>
-                       </body>`
-
-const baseURL = 'http://blog.boot.dev';
-
-
 export function normalizeURL(url) {
   const newUrl = new URL(url);
   const pathnameWithoutSlash = newUrl.pathname.split('/');
@@ -28,12 +19,18 @@ export function getURLsFromHTML(HTMLBody, baseURL) {
   const links = [];
 
   for (let link of linksList) {
-    console.log('links ', link.href);
+    if (link.hostname) {
+      if (normalizeURL(baseURL) !== normalizeURL(link)) {
+        continue;
+      } else {
+        links.push(`${link.hostname}${link.href}`);
+      }
+    }
+      
     if (link.href !== '/') {
       links.push(`${baseURL}${link.href}`);
     }
   }
-
 
   return links;
 }
@@ -69,7 +66,8 @@ export async function crawlPage(baseURL, currentURL, pages) {
       }
     })
     .then((html) => {
-      //const allLinks = getURLsFromHTML(html, baseURL);
+      const allLinks = getURLsFromHTML(html, baseURL);
+      console.log(allLinks);
     });
   } catch(err) {
     console.log(err.message);
