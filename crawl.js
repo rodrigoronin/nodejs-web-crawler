@@ -3,7 +3,7 @@ import { JSDOM } from 'jsdom';
 export function normalizeURL(url) {
   const newUrl = new URL(url);
   const pathnameWithoutSlash = newUrl.pathname.split('/');
-  let normalizedURL = `${newUrl.hostname}${pathnameWithoutSlash.join('/')}`;
+  let normalizedURL = `${newUrl.hostname}/${pathnameWithoutSlash.filter((path) => path !== '').join('/')}`;
 
   if (normalizedURL.slice(-1) === '/') {
     return normalizedURL.slice(0, -1);
@@ -28,14 +28,12 @@ export function getURLsFromHTML(HTMLBody, baseURL) {
     }
       
     if (link.href !== '/') {
-      links.push(`${baseURL}${link.href}`);
+      links.push(`${baseURL}${link.href.slice(1)}`);
     }
   }
 
   return links;
 }
-
-let count = 0;
 
 export async function crawlPage(baseURL, currentURL, pages = {}) {
   let linksList = []
