@@ -17,7 +17,7 @@ function main() {
   console.log('Starting crawler robot...');
   console.log('Scanning...', argv[2]);
 
-  crawlPage(argv[2], null, []);
+  crawlPage(argv[2]);
   rline.close();
 }
 

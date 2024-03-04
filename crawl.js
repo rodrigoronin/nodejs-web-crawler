@@ -35,17 +35,31 @@ export function getURLsFromHTML(HTMLBody, baseURL) {
   return links;
 }
 
-export async function crawlPage(baseURL, currentURL, pages) {
-  if (!pages.hasOwnProperty('count')) {
-    currentURL = baseURL;
+let count = 0;
+
+export async function crawlPage(baseURL, currentURL, pages = {}) {
+  let linksList = []
+
+  const baseURLObj = new URL(baseURL);
+  const currentURLObj = new URL(currentURL ?? baseURL);
+
+  if (currentURLObj?.hostname !== baseURLObj.hostname) {
+    return pages;
   }
 
-  if (normalizeURL(baseURL) !== normalizeURL(currentURL)) {
-    return;
+  const normalizedURL = normalizeURL(currentURL ?? baseURL);
+
+  if (pages[normalizedURL] > 0) {
+    pages[normalizedURL]++;
+    return pages;
   }
+
+  pages[normalizedURL] = 1;
+
+  console.log('Crawling on: ', currentURL ?? baseURL);
 
   try {
-    await fetch(currentURL, {
+    await fetch(baseURL, {
       method: 'GET',
       mode: 'cors',
       headers: {
@@ -53,23 +67,29 @@ export async function crawlPage(baseURL, currentURL, pages) {
       }
     })
     .then((res) => {
-      for (let key of res.headers) {
-        if (key[0] === 'content-type' && key[1].split(';').shift() !== 'text/html') {
+      const contentType = res.headers.get('content-type');
+
+      if (!contentType.includes('text/html')) {
           throw new Error('Wrong content-type!');
-        }
       }
       
-      if (res.status === 404) {
-        throw new Error('Something went wrong! Try Again!');
+      if (res.status.toString().slice(0, 1) === '4') {
+        console.log('Something went wrong! Try Again!');
+        return pages;
       } else {
         return res.text();
       }
     })
     .then((html) => {
-      const allLinks = getURLsFromHTML(html, baseURL);
-      console.log(allLinks);
+      linksList = getURLsFromHTML(html, baseURL);
     });
   } catch(err) {
     console.log(err.message);
   }
+
+  for (const link of linksList) {
+    pages = await crawlPage(baseURL, link, pages);
+  }
+
+  return pages;
 }
