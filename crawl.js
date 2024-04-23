@@ -1,15 +1,12 @@
 import { JSDOM } from 'jsdom';
 
-export function normalizeURL(url) {
-  const newUrl = new URL(url);
-  const pathnameWithoutSlash = newUrl.pathname.split('/');
-  let normalizedURL = `${newUrl.hostname}/${pathnameWithoutSlash.filter((path) => path !== '').join('/')}`;
-
-  if (normalizedURL.slice(-1) === '/') {
-    return normalizedURL.slice(0, -1);
-  } else {
-    return normalizedURL;
+function normalizeURL(url){
+  const urlObj = new URL(url)
+  let fullPath = `${urlObj.host}${urlObj.pathname}`
+  if (fullPath.length > 0 && fullPath.slice(-1) === '/'){
+    fullPath = fullPath.slice(0, -1)
   }
+  return fullPath
 }
 
 export function getURLsFromHTML(HTMLBody, baseURL) {
@@ -35,59 +32,44 @@ export function getURLsFromHTML(HTMLBody, baseURL) {
   return links;
 }
 
-export async function crawlPage(baseURL, currentURL, pages = {}) {
-  let linksList = []
-
-  const baseURLObj = new URL(baseURL);
-  const currentURLObj = new URL(currentURL ?? baseURL);
-
-  if (currentURLObj?.hostname !== baseURLObj.hostname) {
-    return pages;
+export async function crawlPage(baseURL, currentURL, pages){
+  const currentUrlObj = new URL(currentURL ?? baseURL)
+  const baseUrlObj = new URL(baseURL)
+  if (currentUrlObj.hostname !== baseUrlObj.hostname){
+    return pages
   }
 
-  const normalizedURL = normalizeURL(currentURL ?? baseURL);
+  const normalizedURL = normalizeURL(currentURL ?? baseURL)
 
-  if (pages[normalizedURL] > 0) {
-    pages[normalizedURL]++;
-    return pages;
+  if (pages[normalizedURL] > 0){
+    pages[normalizedURL]++
+    return pages
   }
 
-  pages[normalizedURL] = 1;
+  pages[normalizedURL] = 1
 
-  console.log('Crawling on: ', currentURL ?? baseURL);
-
+  console.log(`crawling ${currentURL}`)
+  let htmlBody = ''
   try {
-    await fetch(baseURL, {
-      method: 'GET',
-      mode: 'cors',
-      headers: {
-        'Content-Type': 'text/html',
-      }
-    })
-    .then((res) => {
-      const contentType = res.headers.get('content-type');
-
-      if (!contentType.includes('text/html')) {
-          throw new Error('Wrong content-type!');
-      }
-      
-      if (res.status.toString().slice(0, 1) === '4') {
-        console.log('Something went wrong! Try Again!');
-        return pages;
-      } else {
-        return res.text();
-      }
-    })
-    .then((html) => {
-      linksList = getURLsFromHTML(html, baseURL);
-    });
-  } catch(err) {
-    console.log(err.message);
+    const resp = await fetch(currentURL)
+    if (resp.status > 399){
+      console.log(`Got HTTP error, status code: ${resp.status}`)
+      return pages
+    }
+    const contentType = resp.headers.get('content-type')
+    if (!contentType.includes('text/html')){
+      console.log(`Got non-html response: ${contentType}`)
+      return pages
+    }
+    htmlBody = await resp.text()
+  } catch (err){
+    console.log(err.message)
   }
 
-  for (const link of linksList) {
-    pages = await crawlPage(baseURL, link, pages);
+  const nextURLs = getURLsFromHTML(htmlBody, baseURL)
+  for (const nextURL of nextURLs){
+    pages = await crawlPage(baseURL, nextURL, pages)
   }
 
-  return pages;
+  return pages
 }

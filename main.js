@@ -9,8 +9,14 @@ async function main() {
     output,
   });
 
-  if (argv.length > 3 || argv.length < 3) {
+  console.log(process.argv.length)
+
+  if (process.argv.length > 4) {
     console.log('Arguments exceeded the limit');
+    rline.close();
+    return;
+  } else if (argv.length < 4) {
+    console.log('No website to crawl');
     rline.close();
     return;
   }
@@ -18,7 +24,7 @@ async function main() {
   console.log('Starting crawler robot...');
   console.log('Scanning...', argv[2]);
 
-  const pages = await crawlPage(argv[2]);
+  const pages = await crawlPage(argv[2], argv[3], {});
 
   printReport(pages);
 
